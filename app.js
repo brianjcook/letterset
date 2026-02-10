@@ -115,6 +115,15 @@ function formatDuration(ms) {
   return `${h}:${m}:${s}`;
 }
 
+function formatCountdownLong(ms) {
+  if (ms < 0) ms = 0;
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${h} hours ${m} minutes ${s} seconds`;
+}
+
 function shuffle(arr, rng) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -305,8 +314,6 @@ function setMessage(text, type) {
 }
 
 function showNextPuzzle(show) {
-  if (!nextPuzzleEl) return;
-  nextPuzzleEl.style.display = show ? 'block' : 'none';
   if (footerCountdownEl) footerCountdownEl.style.display = show ? 'block' : 'none';
 }
 
@@ -440,7 +447,7 @@ function startCountdown() {
   function tick() {
     const { diff } = getNextPuzzleTime();
     countdownEl.textContent = formatDuration(diff);
-    if (footerCountdownTimeEl) footerCountdownTimeEl.textContent = formatDuration(diff);
+    if (footerCountdownTimeEl) footerCountdownTimeEl.textContent = formatCountdownLong(diff);
   }
   tick();
   setInterval(tick, 1000);
