@@ -45,16 +45,6 @@ body {
   text-align: center;
 }
 
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-size: 11px;
-  font-family: 'interstate-mono', monospace;
-  font-weight: 300;
-  color: var(--muted);
-  margin: 0;
-}
-
 .tcb-slogan {
   text-transform: uppercase;
   font-family: 'interstate-mono', monospace;
