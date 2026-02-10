@@ -23,8 +23,10 @@ const timerEl = document.getElementById('timer');
 const countdownEl = document.getElementById('countdown');
 
 const submitBtn = document.getElementById('submit');
-const clearBtn = document.getElementById('clear');
 const resetBtn = document.getElementById('reset');
+const nextPuzzleEl = document.getElementById('next-puzzle');
+const modalEl = document.getElementById('success-modal');
+const closeModalBtn = document.getElementById('close-modal');
 
 function xmur3(str) {
   let h = 1779033703 ^ str.length;
@@ -285,6 +287,8 @@ function resetAll() {
   state.tiles.forEach((t) => (t.used = false));
   state.solved = false;
   setMessage('');
+  showNextPuzzle(false);
+  closeModal();
   persistState(true);
   renderBank();
   renderGrid();
@@ -294,6 +298,23 @@ function setMessage(text, type) {
   msgEl.textContent = text;
   msgEl.className = 'message';
   if (type) msgEl.classList.add(type);
+}
+
+function showNextPuzzle(show) {
+  if (!nextPuzzleEl) return;
+  nextPuzzleEl.style.display = show ? 'block' : 'none';
+}
+
+function openModal() {
+  if (!modalEl) return;
+  modalEl.classList.add('open');
+  modalEl.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+  if (!modalEl) return;
+  modalEl.classList.remove('open');
+  modalEl.setAttribute('aria-hidden', 'true');
 }
 
 function validate() {
@@ -371,19 +392,27 @@ function setupButtons() {
     if (result.ok) {
       state.solved = true;
       setMessage('Success! All four words are valid.', 'success');
+      showNextPuzzle(true);
+      openModal();
       persistState();
     } else {
       setMessage(result.reason, 'error');
     }
   });
 
-  clearBtn.addEventListener('click', () => {
-    clearRow(state.activeRow);
-  });
-
   resetBtn.addEventListener('click', () => {
     resetAll();
   });
+
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', closeModal);
+  }
+
+  if (modalEl) {
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) closeModal();
+    });
+  }
 }
 
 function startTimer() {
@@ -447,6 +476,7 @@ async function init() {
   startTimer();
   startCountdown();
 
+  showNextPuzzle(state.solved);
   if (state.solved) setMessage('Solved! Come back tomorrow for a new puzzle.', 'success');
 
   gridEl.tabIndex = 0;
