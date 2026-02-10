@@ -436,7 +436,9 @@ function initGridEvents() {
       return;
     }
     if (!/^[a-z]$/.test(key)) return;
-    const tile = state.tiles.find((t) => t.ch === key && !t.used);
+    const tile =
+      state.tiles.find((t) => t.ch === key && !t.used) ||
+      state.tiles.find((t) => t.ch === key);
     if (!tile) return;
     placeFromTile(tile.id);
   });
