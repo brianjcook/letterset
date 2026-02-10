@@ -252,11 +252,11 @@ function nextEmptyCell(row) {
   return -1;
 }
 
-function placeFromTile(id, row = null, col = null) {
+function placeFromTile(id, row = null, col = null, useActiveCol = false) {
   const tile = state.tiles.find((t) => t.id === id);
   if (!tile || state.solved) return;
   if (row === null) row = state.activeRow;
-  if (col === null) col = nextEmptyCell(row);
+  if (col === null) col = useActiveCol ? state.activeCol : nextEmptyCell(row);
   if (col < 0) return;
   if (state.grid[row][col]) {
     releaseAt(row, col);
@@ -440,7 +440,7 @@ function initGridEvents() {
       state.tiles.find((t) => t.ch === key && !t.used) ||
       state.tiles.find((t) => t.ch === key);
     if (!tile) return;
-    placeFromTile(tile.id);
+    placeFromTile(tile.id, null, null, true);
   });
 }
 
