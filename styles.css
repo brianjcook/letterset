@@ -183,20 +183,25 @@ h1 {
 }
 
 .letter-bank {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   width: 100%;
 }
 
 .letter-tile {
   border: none;
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--bg-accent);
   color: var(--ink);
   font-size: 20px;
   font-weight: 700;
   padding: 12px 0;
+  min-width: 48px;
+  min-height: 48px;
+  max-width: 48px;
+  max-height: 48px;
   cursor: grab;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }

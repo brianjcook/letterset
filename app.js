@@ -393,6 +393,26 @@ function initGridEvents() {
       }
       return;
     }
+    if (key === 'arrowleft') {
+      e.preventDefault();
+      if (state.activeCol > 0) setActive(state.activeRow, state.activeCol - 1);
+      return;
+    }
+    if (key === 'arrowright') {
+      e.preventDefault();
+      if (state.activeCol < COLS - 1) setActive(state.activeRow, state.activeCol + 1);
+      return;
+    }
+    if (key === 'arrowup') {
+      e.preventDefault();
+      if (state.activeRow > 0) setActive(state.activeRow - 1, state.activeCol);
+      return;
+    }
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      if (state.activeRow < ROWS - 1) setActive(state.activeRow + 1, state.activeCol);
+      return;
+    }
     if (!/^[a-z]$/.test(key)) return;
     const tile = state.tiles.find((t) => t.ch === key && !t.used);
     if (!tile) return;
