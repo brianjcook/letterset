@@ -1,6 +1,6 @@
 const WORD_LIST_PATH = 'valid-wordle-words.txt';
 const PUZZLES_PATH = 'puzzles.json';
-const ROWS = 4;
+const ROWS = 3;
 const COLS = 5;
 const UNUSUAL = new Set(['q', 'x', 'y', 'z']);
 
@@ -161,7 +161,7 @@ function pickDailyWords(allWords, seed) {
       const start = pool[Math.floor(rng() * pool.length)];
       const pick = [start];
       let usedMask = start.mask;
-      for (let slot = 1; slot < 4; slot++) {
+      for (let slot = 1; slot < ROWS; slot++) {
         let found = null;
         for (let tries = 0; tries < 60; tries++) {
           const candidate = candidates[Math.floor(rng() * candidates.length)];
@@ -173,7 +173,7 @@ function pickDailyWords(allWords, seed) {
         pick.push(found);
         usedMask |= found.mask;
       }
-      if (pick.length === 4) {
+      if (pick.length === ROWS) {
         const totalUnusual = pick.reduce((sum, w) => sum + w.unusualCount, 0);
         if (totalUnusual >= minUnusual) return pick;
       }
@@ -302,6 +302,7 @@ function resetAll() {
   setMessage('');
   showNextPuzzle(false);
   closeModal();
+  trackEvent('reset_all');
   persistState(true);
   renderBank();
   renderGrid();
@@ -321,6 +322,7 @@ function openModal() {
   if (!modalEl) return;
   modalEl.classList.add('open');
   modalEl.setAttribute('aria-hidden', 'false');
+  trackEvent('modal_open');
 }
 
 function closeModal() {
@@ -333,7 +335,7 @@ function validate() {
   const words = state.grid.map((row) => row.join(''));
   const hasEmpty = state.grid.flat().some((cell) => !cell);
   if (hasEmpty) {
-    return { ok: false, reason: 'Fill all 20 letters before submitting.' };
+    return { ok: false, reason: 'Fill all 15 letters before submitting.' };
   }
   const invalid = words.filter((w) => !state.validSet.has(w));
   if (invalid.length) {
@@ -407,9 +409,11 @@ function setupButtons() {
       showNextPuzzle(true);
       stopTimer();
       if (modalTimeEl) modalTimeEl.textContent = timerEl.textContent;
+      trackEvent('submit_success', { elapsed_seconds: getElapsedSeconds() });
       openModal();
       persistState();
     } else {
+      trackEvent('submit_failure', { reason: result.reason });
       setMessage(result.reason, 'error');
     }
   });
@@ -443,6 +447,16 @@ function stopTimer() {
   state.timerId = null;
 }
 
+function getElapsedSeconds() {
+  if (!state.startTime) return 0;
+  return Math.floor((Date.now() - state.startTime) / 1000);
+}
+
+function trackEvent(name, params = {}) {
+  if (typeof window.gtag !== 'function') return;
+  window.gtag('event', name, params);
+}
+
 function startCountdown() {
   function tick() {
     const { diff } = getNextPuzzleTime();
@@ -469,7 +483,7 @@ async function init() {
     if (puzzlesRes.ok) {
       const puzzles = await puzzlesRes.json();
       const match = puzzles.puzzles?.find((p) => p.date === state.dayKey);
-      if (match && Array.isArray(match.words) && match.words.length === 4) {
+      if (match && Array.isArray(match.words) && match.words.length === ROWS) {
         pickWords = match.words;
       }
     }
@@ -503,6 +517,8 @@ async function init() {
     stopTimer();
     if (modalTimeEl) modalTimeEl.textContent = timerEl.textContent;
   }
+
+  trackEvent('puzzle_start', { day_key: state.dayKey });
 
   gridEl.tabIndex = 0;
   gridEl.focus();
