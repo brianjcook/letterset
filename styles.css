@@ -20,7 +20,9 @@
 
 body {
   margin: 0;
-  font-family: 'Libre Franklin', system-ui, sans-serif;
+  font-family: 'interstate-mono', monospace;
+  font-size: 100%;
+  font-weight: 300;
   color: var(--ink);
   background: radial-gradient(circle at top left, #fff5e6 0%, var(--bg) 40%),
     repeating-linear-gradient(45deg, rgba(196, 95, 42, 0.08) 0 6px, rgba(255, 255, 255, 0) 6px 12px);
@@ -47,21 +49,103 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 11px;
+  font-family: 'interstate-mono', monospace;
+  font-weight: 300;
   color: var(--muted);
   margin: 0;
 }
 
+.tcb-slogan {
+  text-transform: uppercase;
+  font-family: 'interstate-mono', monospace;
+  font-weight: 400;
+  font-size: 12px;
+  margin-top: 0.75em;
+  color: #726969;
+}
+
 h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'matrix-ii-ext-semi-narrow', serif;
   font-size: clamp(2.5rem, 3.2vw, 3.2rem);
-  margin: 0 0 8px;
+  line-height: 1;
+  max-width: 960px;
+  margin: 0 auto 8px;
+  text-align: center;
 }
 
 .subhead {
   max-width: 500px;
-  font-size: 18px;
+  font-size: 100%;
+  font-weight: 300;
   color: var(--muted);
   margin: 0;
+}
+
+.tcb-flags {
+  text-align: center;
+  margin: 1em auto 0.25em;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+.flag {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  padding: 4px;
+  margin: 2px;
+  border: 1px solid #eee;
+}
+
+.flag::before,
+.flag::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 0;
+}
+
+.c {
+  background: #152536;
+}
+
+.c::before {
+  top: 20%;
+  bottom: 20%;
+  background: #faf7f4;
+}
+
+.c::after {
+  top: 40%;
+  bottom: 40%;
+  background: #f2916b;
+}
+
+.o {
+  background: #f2916b;
+}
+
+.o::before {
+  background: #ffe882;
+  right: 35%;
+  bottom: -100%;
+  transform: rotate(-45deg);
+  left: -100%;
+}
+
+.k {
+  background: #ffe882;
+}
+
+.k::before {
+  background: #152536;
+  left: 50%;
 }
 
 .status {
@@ -299,5 +383,26 @@ button.ghost {
   }
   .slot {
     min-height: 46px;
+  }
+}
+
+@media (min-width: 40em) {
+  .tcb-flags {
+    text-align: center;
+    margin: 1em auto 0.25em;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+  }
+
+  .flag {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    padding: 4px;
+    margin: 2px;
+    border: 1px solid #eee;
   }
 }
