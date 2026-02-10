@@ -18,8 +18,8 @@ jobs:
           username: ${{ secrets.FREEHOSTIA_FTP_USER }}
           password: ${{ secrets.FREEHOSTIA_FTP_PASSWORD }}
           protocol: ftps
-          port: 21
-          server-dir: ${{ secrets.FREEHOSTIA_FTP_REMOTE_PATH }}
+          port: 990
+          server-dir: /thecookblog.com/new/games/letterset/
           local-dir: ./
           exclude: |
             **/.git*
