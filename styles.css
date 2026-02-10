@@ -65,8 +65,8 @@ h1 {
 }
 
 .subhead {
-  max-width: 600px;
-  font-size: 100%;
+  max-width: 700px;
+  font-size: 110%;
   font-weight: 300;
   color: var(--muted);
   margin: 0;
