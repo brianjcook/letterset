@@ -254,11 +254,19 @@ function nextEmptyCell(row) {
 
 function placeFromTile(id, row = null, col = null) {
   const tile = state.tiles.find((t) => t.id === id);
-  if (!tile || tile.used || state.solved) return;
+  if (!tile || state.solved) return;
   if (row === null) row = state.activeRow;
   if (col === null) col = nextEmptyCell(row);
   if (col < 0) return;
-  if (state.grid[row][col]) return;
+  if (state.grid[row][col]) {
+    releaseAt(row, col);
+  }
+  if (tile.used) {
+    const { row: fromRow, col: fromCol } = findTilePosition(tile.ch);
+    if (fromRow !== -1) {
+      releaseAt(fromRow, fromCol);
+    }
+  }
   state.grid[row][col] = tile.ch;
   tile.used = true;
   const nextCol = nextEmptyCell(row);
@@ -273,12 +281,26 @@ function placeFromTile(id, row = null, col = null) {
   renderGrid();
 }
 
-function removeAt(row, col) {
+function findTilePosition(ch) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (state.grid[r][c] === ch) return { row: r, col: c };
+    }
+  }
+  return { row: -1, col: -1 };
+}
+
+function releaseAt(row, col) {
   const ch = state.grid[row][col];
-  if (!ch || state.solved) return;
+  if (!ch) return;
   const tile = state.tiles.find((t) => t.ch === ch && t.used);
   if (tile) tile.used = false;
   state.grid[row][col] = '';
+}
+
+function removeAt(row, col) {
+  if (!state.grid[row][col] || state.solved) return;
+  releaseAt(row, col);
   setActive(row, col);
   persistState();
   renderBank();
