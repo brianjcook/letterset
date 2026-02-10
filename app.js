@@ -13,7 +13,8 @@ const state = {
   activeCol: 0,
   solved: false,
   dayKey: '',
-  startTime: null
+  startTime: null,
+  timerId: null
 };
 
 const bankEl = document.getElementById('letter-bank');
@@ -21,6 +22,9 @@ const gridEl = document.getElementById('word-grid');
 const msgEl = document.getElementById('message');
 const timerEl = document.getElementById('timer');
 const countdownEl = document.getElementById('countdown');
+const footerCountdownEl = document.getElementById('footer-countdown');
+const footerCountdownTimeEl = document.getElementById('footer-countdown-time');
+const modalTimeEl = document.getElementById('modal-time');
 
 const submitBtn = document.getElementById('submit');
 const resetBtn = document.getElementById('reset');
@@ -303,6 +307,7 @@ function setMessage(text, type) {
 function showNextPuzzle(show) {
   if (!nextPuzzleEl) return;
   nextPuzzleEl.style.display = show ? 'block' : 'none';
+  if (footerCountdownEl) footerCountdownEl.style.display = show ? 'block' : 'none';
 }
 
 function openModal() {
@@ -391,8 +396,10 @@ function setupButtons() {
     const result = validate();
     if (result.ok) {
       state.solved = true;
-      setMessage('Success! All four words are valid.', 'success');
+      setMessage('Success! You found a solution.', 'success');
       showNextPuzzle(true);
+      stopTimer();
+      if (modalTimeEl) modalTimeEl.textContent = timerEl.textContent;
       openModal();
       persistState();
     } else {
@@ -417,16 +424,23 @@ function setupButtons() {
 
 function startTimer() {
   if (!state.startTime) state.startTime = Date.now();
-  setInterval(() => {
+  if (state.timerId) return;
+  state.timerId = setInterval(() => {
     const elapsed = Date.now() - state.startTime;
     timerEl.textContent = formatDuration(elapsed);
   }, 1000);
+}
+
+function stopTimer() {
+  if (state.timerId) clearInterval(state.timerId);
+  state.timerId = null;
 }
 
 function startCountdown() {
   function tick() {
     const { diff } = getNextPuzzleTime();
     countdownEl.textContent = formatDuration(diff);
+    if (footerCountdownTimeEl) footerCountdownTimeEl.textContent = formatDuration(diff);
   }
   tick();
   setInterval(tick, 1000);
@@ -477,7 +491,11 @@ async function init() {
   startCountdown();
 
   showNextPuzzle(state.solved);
-  if (state.solved) setMessage('Solved! Come back tomorrow for a new puzzle.', 'success');
+  if (state.solved) {
+    setMessage('Solved! Come back tomorrow for a new puzzle.', 'success');
+    stopTimer();
+    if (modalTimeEl) modalTimeEl.textContent = timerEl.textContent;
+  }
 
   gridEl.tabIndex = 0;
   gridEl.focus();
