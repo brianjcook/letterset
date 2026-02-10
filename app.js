@@ -245,11 +245,42 @@ function setActive(row, col) {
   renderGrid();
 }
 
+function focusGrid() {
+  if (gridEl.tabIndex < 0) gridEl.tabIndex = 0;
+  gridEl.focus();
+}
+
+function focusFirstSlot() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (!state.grid[r][c]) {
+        setActive(r, c);
+        focusGrid();
+        return;
+      }
+    }
+  }
+  setActive(0, 0);
+  focusGrid();
+}
+
 function nextEmptyCell(row) {
   for (let c = 0; c < COLS; c++) {
     if (!state.grid[row][c]) return c;
   }
   return -1;
+}
+
+function nextOpenSlot(fromRow, fromCol) {
+  for (let c = fromCol + 1; c < COLS; c++) {
+    if (!state.grid[fromRow][c]) return { row: fromRow, col: c };
+  }
+  for (let r = fromRow + 1; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (!state.grid[r][c]) return { row: r, col: c };
+    }
+  }
+  return null;
 }
 
 function placeFromTile(id, row = null, col = null, useActiveCol = false) {
@@ -269,16 +300,15 @@ function placeFromTile(id, row = null, col = null, useActiveCol = false) {
   }
   state.grid[row][col] = tile.ch;
   tile.used = true;
-  const nextCol = nextEmptyCell(row);
-  if (nextCol >= 0) {
-    state.activeCol = nextCol;
-  } else if (row < ROWS - 1) {
-    state.activeRow = row + 1;
-    state.activeCol = nextEmptyCell(state.activeRow);
+  const nextOpen = nextOpenSlot(row, col);
+  if (nextOpen) {
+    state.activeRow = nextOpen.row;
+    state.activeCol = nextOpen.col;
   }
   persistState();
   renderBank();
   renderGrid();
+  focusGrid();
 }
 
 function findTilePosition(ch) {
@@ -460,10 +490,12 @@ function setupButtons() {
       trackEvent('submit_failure', { reason: result.reason });
       setMessage(result.reason, 'error');
     }
+    if (!state.solved) focusFirstSlot();
   });
 
   resetBtn.addEventListener('click', () => {
     resetAll();
+    focusFirstSlot();
   });
 
   if (closeModalBtn) {
@@ -564,8 +596,7 @@ async function init() {
 
   trackEvent('puzzle_start', { day_key: state.dayKey });
 
-  gridEl.tabIndex = 0;
-  gridEl.focus();
+  focusFirstSlot();
 }
 
 init();
