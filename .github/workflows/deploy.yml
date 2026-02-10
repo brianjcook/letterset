@@ -1,0 +1,28 @@
+name: Deploy to Freehostia
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: FTP deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FREEHOSTIA_FTP_HOST }}
+          username: ${{ secrets.FREEHOSTIA_FTP_USER }}
+          password: ${{ secrets.FREEHOSTIA_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          server-dir: ${{ secrets.FREEHOSTIA_FTP_REMOTE_PATH }}
+          local-dir: ./
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/README.md
+            **/.gitignore

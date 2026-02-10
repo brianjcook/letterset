@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Letterset</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Daily Letter Challenge</p>
+        <h1>Letterset</h1>
+        <p class="subhead">Use every letter exactly once to make four valid five-letter words.</p>
+      </div>
+      <div class="status">
+        <div class="stat">
+          <span class="label">Timer</span>
+          <span class="value" id="timer">00:00</span>
+        </div>
+        <div class="stat">
+          <span class="label">Next Puzzle</span>
+          <span class="value" id="countdown">--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="game">
+      <section class="bank">
+        <div class="section-title">
+          <h2>Letter Bank</h2>
+          <p>Drag, click, or type to fill the grid.</p>
+        </div>
+        <div id="letter-bank" class="letter-bank" aria-label="Letter bank"></div>
+      </section>
+
+      <section class="grid" aria-label="Word slots">
+        <div class="section-title">
+          <h2>Word Slots</h2>
+          <p>Make four valid five-letter words.</p>
+        </div>
+        <div id="word-grid" class="word-grid"></div>
+        <div class="controls">
+          <button id="submit" class="primary">Submit</button>
+          <button id="clear" class="ghost">Clear Row</button>
+          <button id="reset" class="ghost">Reset All</button>
+        </div>
+        <div id="message" class="message" role="status"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Puzzle refreshes daily at 3:00 AM ET.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
