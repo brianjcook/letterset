@@ -217,7 +217,7 @@ h1 {
 
 .word-grid {
   display: grid;
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: 12px;
   width: 100%;
 }
@@ -268,9 +268,12 @@ button.primary {
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1rem;
   cursor: pointer;
+  font-family: 'interstate-mono';
+  text-transform: uppercase;
 }
 
 button.primary:hover {
@@ -284,6 +287,10 @@ button.ghost {
   padding: 12px 20px;
   font-weight: 600;
   cursor: pointer;
+  font-family: 'interstate-mono';
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  color: #152536;
 }
 
 .timer-row {
