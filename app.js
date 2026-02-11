@@ -261,7 +261,7 @@ function renderBank() {
     btn.textContent = tile.ch.toUpperCase();
     btn.setAttribute('data-id', tile.id);
     btn.draggable = !tile.used;
-    btn.addEventListener('click', () => placeFromTile(tile.id));
+    btn.addEventListener('click', () => placeFromTile(tile.id, null, null, true));
     btn.addEventListener('dragstart', (e) => {
       if (tile.used) return e.preventDefault();
       e.dataTransfer.setData('text/plain', tile.id);
