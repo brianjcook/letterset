@@ -124,6 +124,14 @@ function formatCountdownLong(ms) {
   return `${h} hours ${m} minutes ${s} seconds`;
 }
 
+function formatElapsedLong(totalSeconds) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(safeSeconds / 3600);
+  const m = Math.floor((safeSeconds % 3600) / 60);
+  const s = safeSeconds % 60;
+  return `${h} hours ${m} minutes and ${s} seconds`;
+}
+
 function shuffle(arr, rng) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -482,8 +490,11 @@ function setupButtons() {
       setMessage('Success! You found a solution.', 'success');
       showNextPuzzle(true);
       stopTimer();
-      if (modalTimeEl) modalTimeEl.textContent = timerEl.textContent;
-      trackEvent('submit_success', { elapsed_seconds: getElapsedSeconds() });
+      const elapsedSeconds = getElapsedSeconds();
+      if (modalTimeEl) {
+        modalTimeEl.textContent = `You found a solution in ${formatElapsedLong(elapsedSeconds)}.`;
+      }
+      trackEvent('submit_success', { elapsed_seconds: elapsedSeconds });
       openModal();
       persistState();
     } else {
@@ -591,7 +602,9 @@ async function init() {
   if (state.solved) {
     setMessage('Solved! Come back tomorrow for a new puzzle.', 'success');
     stopTimer();
-    if (modalTimeEl) modalTimeEl.textContent = timerEl.textContent;
+    if (modalTimeEl) {
+      modalTimeEl.textContent = `You found a solution in ${formatElapsedLong(getElapsedSeconds())}.`;
+    }
   }
 
   trackEvent('puzzle_start', { day_key: state.dayKey });
