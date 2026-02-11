@@ -1,8 +1,9 @@
-const WORD_LIST_PATH = 'valid-wordle-words.txt';
+const WORD_LIST_PATH = '_wordlists/unique-letter-words.txt';
 const PUZZLES_PATH = 'puzzles.json';
 const ROWS = 3;
 const COLS = 5;
 const UNUSUAL = new Set(['q', 'x', 'y', 'z']);
+const MIN_SOLUTIONS = 3;
 
 const state = {
   words: [],
@@ -150,10 +151,37 @@ function computeMask(word) {
   return mask;
 }
 
-function pickDailyWords(allWords, seed) {
-  const rng = mulberry32(seed);
+function countSolutionsForMask(fullMask, maskToCount, minSolutions) {
+  const masks = [];
+  for (const [mask] of maskToCount) {
+    if ((mask & fullMask) === mask) masks.push(mask);
+  }
+  masks.sort((a, b) => a - b);
+  let total = 0;
+  for (let i = 0; i < masks.length; i++) {
+    const m1 = masks[i];
+    const c1 = maskToCount.get(m1) || 0;
+    for (let j = i + 1; j < masks.length; j++) {
+      const m2 = masks[j];
+      if (m1 & m2) continue;
+      const used = m1 | m2;
+      if ((used & fullMask) !== used) continue;
+      const m3 = fullMask ^ used;
+      if (m3 <= m2) continue;
+      const c3 = maskToCount.get(m3);
+      if (!c3) continue;
+      const c2 = maskToCount.get(m2) || 0;
+      total += c1 * c2 * c3;
+      if (total >= minSolutions) return total;
+    }
+  }
+  return total;
+}
+
+function buildCandidates(allWords) {
   const candidates = [];
   const unusualCandidates = [];
+  const maskToCount = new Map();
   for (const w of allWords) {
     const mask = computeMask(w);
     if (mask === null) continue;
@@ -161,7 +189,14 @@ function pickDailyWords(allWords, seed) {
     const entry = { word: w, mask, unusualCount };
     candidates.push(entry);
     if (unusualCount > 0) unusualCandidates.push(entry);
+    maskToCount.set(mask, (maskToCount.get(mask) || 0) + 1);
   }
+  return { candidates, unusualCandidates, maskToCount };
+}
+
+function pickDailyWords(candidatesBundle, seed) {
+  const rng = mulberry32(seed);
+  const { candidates, unusualCandidates, maskToCount } = candidatesBundle;
 
   function tryFind(minUnusual) {
     for (let attempt = 0; attempt < 12000; attempt++) {
@@ -183,13 +218,32 @@ function pickDailyWords(allWords, seed) {
       }
       if (pick.length === ROWS) {
         const totalUnusual = pick.reduce((sum, w) => sum + w.unusualCount, 0);
-        if (totalUnusual >= minUnusual) return pick;
+        if (totalUnusual < minUnusual) continue;
+        let fullMask = 0;
+        for (const entry of pick) fullMask |= entry.mask;
+        const solutionCount = countSolutionsForMask(fullMask, maskToCount, MIN_SOLUTIONS);
+        if (solutionCount >= MIN_SOLUTIONS) return pick;
       }
     }
     return null;
   }
 
   return tryFind(2) || tryFind(1) || tryFind(0);
+}
+
+function validatePuzzleWords(words, candidatesBundle) {
+  if (!Array.isArray(words) || words.length !== ROWS) return false;
+  const { maskToCount } = candidatesBundle;
+  let fullMask = 0;
+  for (const w of words) {
+    const mask = computeMask(w);
+    if (mask === null) return false;
+    if (!maskToCount.has(mask)) return false;
+    if (fullMask & mask) return false;
+    fullMask |= mask;
+  }
+  const solutionCount = countSolutionsForMask(fullMask, maskToCount, MIN_SOLUTIONS);
+  return solutionCount >= MIN_SOLUTIONS;
 }
 
 function buildTiles(words, seed) {
@@ -563,6 +617,7 @@ async function init() {
   const words = text.split(/\r?\n/).map((w) => w.trim().toLowerCase()).filter(Boolean);
   state.words = words;
   state.validSet = new Set(words);
+  const candidatesBundle = buildCandidates(words);
 
   let pickWords = null;
   try {
@@ -571,7 +626,9 @@ async function init() {
       const puzzles = await puzzlesRes.json();
       const match = puzzles.puzzles?.find((p) => p.date === state.dayKey);
       if (match && Array.isArray(match.words) && match.words.length === ROWS) {
-        pickWords = match.words;
+        if (validatePuzzleWords(match.words, candidatesBundle)) {
+          pickWords = match.words;
+        }
       }
     }
   } catch (err) {
@@ -579,7 +636,7 @@ async function init() {
   }
 
   if (!pickWords) {
-    const pick = pickDailyWords(words, seed);
+    const pick = pickDailyWords(candidatesBundle, seed);
     if (!pick) {
       setMessage('Failed to build a puzzle. Refresh to try again.', 'error');
       return;
