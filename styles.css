@@ -29,7 +29,6 @@ body {
 }
 
 .page {
-  min-height: 100vh;
   padding: 0 24px 32px;
   display: flex;
   flex-direction: column;
