@@ -514,7 +514,11 @@ function initGridEvents() {
     }
     if (key === 'arrowleft') {
       e.preventDefault();
-      if (state.activeCol > 0) setActive(state.activeRow, state.activeCol - 1);
+      if (state.activeCol > 0) {
+        setActive(state.activeRow, state.activeCol - 1);
+      } else if (state.activeRow > 0) {
+        setActive(state.activeRow - 1, COLS - 1);
+      }
       return;
     }
     if (key === 'arrowright') {
