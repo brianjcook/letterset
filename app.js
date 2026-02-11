@@ -502,8 +502,13 @@ function initGridEvents() {
       const { activeRow, activeCol } = state;
       if (state.grid[activeRow][activeCol]) {
         removeAt(activeRow, activeCol);
-      } else if (activeCol > 0) {
-        removeAt(activeRow, activeCol - 1);
+      }
+      if (activeCol > 0) {
+        setActive(activeRow, activeCol - 1);
+      } else if (activeRow > 0) {
+        setActive(activeRow - 1, COLS - 1);
+      } else {
+        setActive(activeRow, activeCol);
       }
       return;
     }
