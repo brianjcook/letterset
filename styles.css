@@ -67,10 +67,11 @@ h1 {
 
 .subhead {
   max-width: 700px;
-  font-size: 90%;
-  font-weight: 300;
-  color: var(--muted);
-  margin: 0;
+  font-family: 'interstate-mono', monospace;
+  font-weight: 400;
+  font-size: 12px;
+  margin-top: 0.75em;
+  color: #726969;
 }
 
 .tcb-flags {
