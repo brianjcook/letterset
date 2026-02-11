@@ -519,7 +519,11 @@ function initGridEvents() {
     }
     if (key === 'arrowright') {
       e.preventDefault();
-      if (state.activeCol < COLS - 1) setActive(state.activeRow, state.activeCol + 1);
+      if (state.activeCol < COLS - 1) {
+        setActive(state.activeRow, state.activeCol + 1);
+      } else if (state.activeRow < ROWS - 1) {
+        setActive(state.activeRow + 1, 0);
+      }
       return;
     }
     if (key === 'arrowup') {
