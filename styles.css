@@ -179,7 +179,7 @@ h1 {
   border-radius: 20px;
   box-shadow: none;
   display: grid;
-  gap: 18px;
+  gap: 12px;
   justify-items: center;
 }
 
@@ -230,15 +230,15 @@ h1 {
 .word-row {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .slot {
   width: 100%;
   aspect-ratio: 1 / 1;
-  min-height: 52px;
-  max-height: 52px;
-  max-width: 52px;
+  min-height: 48px;
+  max-height: 48px;
+  max-width: 48px;
   border-radius: 4px;
   border: 2px solid #e2d6c5;
   display: grid;
