@@ -368,10 +368,12 @@ function placeFromTile(id, row = null, col = null, useActiveCol = false) {
   }
   state.grid[row][col] = tile.ch;
   tile.used = true;
-  const nextOpen = nextOpenSlot(row, col);
-  if (nextOpen) {
-    state.activeRow = nextOpen.row;
-    state.activeCol = nextOpen.col;
+  if (col < COLS - 1) {
+    state.activeRow = row;
+    state.activeCol = col + 1;
+  } else if (row < ROWS - 1) {
+    state.activeRow = row + 1;
+    state.activeCol = 0;
   }
   persistState();
   renderBank();
