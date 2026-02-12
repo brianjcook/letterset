@@ -1,4 +1,4 @@
-const WORD_LIST_PATH = '../valid-wordle-words.txt';
+const WORD_LIST_PATH = '../_wordlists/unique-letter-words.txt';
 const PUZZLES_PATH = '../puzzles.json';
 const ROWS = 3;
 const MIN_DATE = '2026-02-10';
