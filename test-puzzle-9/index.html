@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Letterset Test test-9</title>
+  <link rel="stylesheet" href="https://use.typekit.net/umi6cye.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-04ZVKGW28V"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-04ZVKGW28V');
+  </script>
+</head>
+<body>
+  <div class="tcb-flags" aria-hidden="true">
+    <a href="https://www.thecookblog.com"><div class="flag c"></div></a>
+    <a href="https://www.thecookblog.com"><div class="flag o"></div></a>
+    <a href="https://www.thecookblog.com"><div class="flag o"></div></a>
+    <a href="https://www.thecookblog.com"><div class="flag k"></div></a>
+  </div>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <h1>Letterset</h1>
+        <p class="subhead">Use 15 letters to make three words.</p>
+      </div>
+      <div class="status">
+        <div class="stat next-puzzle" id="next-puzzle">
+          <span class="label">Next Puzzle</span>
+          <span class="value" id="countdown">--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="game">
+      <section class="play-area" aria-label="Letterset puzzle">
+        <div id="letter-bank" class="letter-bank" aria-label="Letter bank"></div>
+        <div id="word-grid" class="word-grid" aria-label="Word slots"></div>
+        <div class="controls">
+          <button id="submit" class="primary">Submit</button>
+          <button id="reset" class="ghost">Reset</button>
+        </div>
+        <div class="timer-row">
+          <span class="timer-label">Timer</span>
+          <span id="timer" class="timer-value">00:00</span>
+        </div>
+        <div id="message" class="message" role="status"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p class="footer-countdown" id="footer-countdown">Next puzzle in <span id="footer-countdown-time">--:--:--</span></p>
+    </footer>
+  </div>
+
+  <div id="success-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card" role="document">
+      <p class="modal-eyebrow">Solved</p>
+      <h2>Nice work!</h2>
+      <p id="modal-time" class="modal-time">You found a solution in 0 hours 0 minutes and 0 seconds.</p>
+      <button id="close-modal" class="primary">Close</button>
+    </div>
+  </div>
+
+    <script>
+    window.LETTERSET_TEST_WORDS = ["codex","trams","bulgy"];
+    window.LETTERSET_TEST_ID = "test-9";
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

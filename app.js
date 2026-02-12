@@ -643,20 +643,31 @@ async function init() {
   state.validSet = new Set(words);
   const candidatesBundle = buildCandidates(words);
 
+  const testWords = Array.isArray(window.LETTERSET_TEST_WORDS) ? window.LETTERSET_TEST_WORDS : null;
+  const testId = window.LETTERSET_TEST_ID || 'custom';
+
   let pickWords = null;
-  try {
-    const puzzlesRes = await fetch(PUZZLES_PATH);
-    if (puzzlesRes.ok) {
-      const puzzles = await puzzlesRes.json();
-      const match = puzzles.puzzles?.find((p) => p.date === state.dayKey);
-      if (match && Array.isArray(match.words) && match.words.length === ROWS) {
-        if (validatePuzzleWords(match.words, candidatesBundle)) {
-          pickWords = match.words;
+  if (testWords) {
+    const normalized = testWords.map((w) => String(w).toLowerCase());
+    if (validatePuzzleWords(normalized, candidatesBundle)) {
+      pickWords = normalized;
+      state.dayKey = `test-${testId}`;
+    }
+  } else {
+    try {
+      const puzzlesRes = await fetch(PUZZLES_PATH);
+      if (puzzlesRes.ok) {
+        const puzzles = await puzzlesRes.json();
+        const match = puzzles.puzzles?.find((p) => p.date === state.dayKey);
+        if (match && Array.isArray(match.words) && match.words.length === ROWS) {
+          if (validatePuzzleWords(match.words, candidatesBundle)) {
+            pickWords = match.words;
+          }
         }
       }
+    } catch (err) {
+      console.warn('Failed to load puzzles.json, falling back.', err);
     }
-  } catch (err) {
-    console.warn('Failed to load puzzles.json, falling back.', err);
   }
 
   if (!pickWords) {
