@@ -546,6 +546,11 @@ function initGridEvents() {
       if (state.activeRow < ROWS - 1) setActive(state.activeRow + 1, state.activeCol);
       return;
     }
+    if (key === 'enter') {
+      e.preventDefault();
+      submitBtn.click();
+      return;
+    }
     if (!/^[a-z]$/.test(key)) return;
     const tile =
       state.tiles.find((t) => t.ch === key && !t.used) ||
