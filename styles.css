@@ -70,6 +70,7 @@ h1 {
   font-weight: 400;
   font-size: 13px;
   margin-top: 0.75em;
+  margin-bottom: 0;
   color: #726969;
 }
 
@@ -189,6 +190,7 @@ h1 {
   justify-content: center;
   gap: 12px;
   width: 100%;
+  margin-bottom: 12px;
 }
 
 .letter-tile {
