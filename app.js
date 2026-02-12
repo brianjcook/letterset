@@ -130,7 +130,13 @@ function formatElapsedLong(totalSeconds) {
   const h = Math.floor(safeSeconds / 3600);
   const m = Math.floor((safeSeconds % 3600) / 60);
   const s = safeSeconds % 60;
-  return `${h} hours ${m} minutes and ${s} seconds`;
+  const parts = [];
+  if (h > 0) parts.push(`${h} hours`);
+  if (m > 0) parts.push(`${m} minutes`);
+  if (s > 0 || parts.length === 0) parts.push(`${s} seconds`);
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+  return `${parts[0]} ${parts[1]} and ${parts[2]}`;
 }
 
 function shuffle(arr, rng) {
