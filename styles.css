@@ -248,7 +248,7 @@ h1 {
   font-size: 20px;
   font-weight: 700;
   font-family: 'Libre Franklin', system-ui, sans-serif;
-  background: #fffaf3;
+  background: #fefefe;
   cursor: pointer;
   transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
