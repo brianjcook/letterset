@@ -23,7 +23,10 @@ jobs:
           server-dir: ${{ secrets.FREEHOSTIA_FTP_REMOTE_PATH }}
           local-dir: ./
           exclude: |
+            .git/**
+            .git*
             **/.git*
+            **/.git/**
             **/.github/**
             **/README.md
             **/.gitignore
