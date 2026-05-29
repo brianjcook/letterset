@@ -28,5 +28,6 @@ jobs:
             **/.git*
             **/.git/**
             **/.github/**
+            CODEX_CONTEXT.md
             **/README.md
             **/.gitignore
