@@ -2,6 +2,8 @@ const WORD_LIST_PATH = '../_wordlists/unique-letter-words.txt';
 const PUZZLES_PATH = '../puzzles.json';
 const ROWS = 3;
 const MIN_DATE = '2026-02-10';
+const UNUSUAL = new Set(['q', 'x', 'y', 'z']);
+const MIN_SOLUTIONS = 3;
 
 const statusEl = document.getElementById('status');
 const listEl = document.getElementById('solutions-list');
@@ -106,34 +108,99 @@ function computeMask(word) {
   return mask;
 }
 
-function pickDailyWords(allWords, seed) {
-  const rng = mulberry32(seed);
+function countSolutionsForMask(fullMask, maskToCount, minSolutions = Infinity) {
+  const masks = [];
+  for (const [mask] of maskToCount) {
+    if ((mask & fullMask) === mask) masks.push(mask);
+  }
+  masks.sort((a, b) => a - b);
+  let total = 0;
+  for (let i = 0; i < masks.length; i++) {
+    const m1 = masks[i];
+    const c1 = maskToCount.get(m1) || 0;
+    for (let j = i + 1; j < masks.length; j++) {
+      const m2 = masks[j];
+      if (m1 & m2) continue;
+      const used = m1 | m2;
+      if ((used & fullMask) !== used) continue;
+      const m3 = fullMask ^ used;
+      if (m3 <= m2) continue;
+      const c3 = maskToCount.get(m3);
+      if (!c3) continue;
+      const c2 = maskToCount.get(m2) || 0;
+      total += c1 * c2 * c3;
+      if (total >= minSolutions) return total;
+    }
+  }
+  return total;
+}
+
+function buildCandidates(allWords) {
   const candidates = [];
+  const unusualCandidates = [];
+  const maskToCount = new Map();
   for (const w of allWords) {
     const mask = computeMask(w);
     if (mask === null) continue;
-    candidates.push({ word: w, mask });
+    const unusualCount = w.split('').filter((ch) => UNUSUAL.has(ch)).length;
+    const entry = { word: w, mask, unusualCount };
+    candidates.push(entry);
+    if (unusualCount > 0) unusualCandidates.push(entry);
+    maskToCount.set(mask, (maskToCount.get(mask) || 0) + 1);
+  }
+  return { candidates, unusualCandidates, maskToCount };
+}
+
+function pickDailyWords(candidatesBundle, seed) {
+  const rng = mulberry32(seed);
+  const { candidates, unusualCandidates, maskToCount } = candidatesBundle;
+
+  function tryFind(minUnusual) {
+    for (let attempt = 0; attempt < 12000; attempt++) {
+      const pool = unusualCandidates.length ? unusualCandidates : candidates;
+      const start = pool[Math.floor(rng() * pool.length)];
+      const pick = [start];
+      let usedMask = start.mask;
+      for (let slot = 1; slot < ROWS; slot++) {
+        let found = null;
+        for (let tries = 0; tries < 60; tries++) {
+          const candidate = candidates[Math.floor(rng() * candidates.length)];
+          if (candidate.mask & usedMask) continue;
+          found = candidate;
+          break;
+        }
+        if (!found) break;
+        pick.push(found);
+        usedMask |= found.mask;
+      }
+      if (pick.length === ROWS) {
+        const totalUnusual = pick.reduce((sum, w) => sum + w.unusualCount, 0);
+        if (totalUnusual < minUnusual) continue;
+        let fullMask = 0;
+        for (const entry of pick) fullMask |= entry.mask;
+        const solutionCount = countSolutionsForMask(fullMask, maskToCount, MIN_SOLUTIONS);
+        if (solutionCount >= MIN_SOLUTIONS) return pick;
+      }
+    }
+    return null;
   }
 
-  for (let attempt = 0; attempt < 12000; attempt++) {
-    const start = candidates[Math.floor(rng() * candidates.length)];
-    const pick = [start];
-    let usedMask = start.mask;
-    for (let slot = 1; slot < ROWS; slot++) {
-      let found = null;
-      for (let tries = 0; tries < 60; tries++) {
-        const candidate = candidates[Math.floor(rng() * candidates.length)];
-        if (candidate.mask & usedMask) continue;
-        found = candidate;
-        break;
-      }
-      if (!found) break;
-      pick.push(found);
-      usedMask |= found.mask;
-    }
-    if (pick.length === ROWS) return pick;
+  return tryFind(2) || tryFind(1) || tryFind(0);
+}
+
+function validatePuzzleWords(words, candidatesBundle) {
+  if (!Array.isArray(words) || words.length !== ROWS) return false;
+  const { maskToCount } = candidatesBundle;
+  let fullMask = 0;
+  for (const w of words) {
+    const mask = computeMask(w);
+    if (mask === null) return false;
+    if (!maskToCount.has(mask)) return false;
+    if (fullMask & mask) return false;
+    fullMask |= mask;
   }
-  return null;
+  const solutionCount = countSolutionsForMask(fullMask, maskToCount, MIN_SOLUTIONS);
+  return solutionCount >= MIN_SOLUTIONS;
 }
 
 async function loadWords() {
@@ -263,11 +330,12 @@ async function init() {
   });
 
   const [words, puzzleMap] = await Promise.all([loadWords(), loadPuzzleMap()]);
+  const candidatesBundle = buildCandidates(words);
 
   let puzzleWords = puzzleMap.get(requestedDate);
-  if (!puzzleWords) {
+  if (!validatePuzzleWords(puzzleWords, candidatesBundle)) {
     const seed = xmur3(requestedDate)();
-    const pick = pickDailyWords(words, seed);
+    const pick = pickDailyWords(candidatesBundle, seed);
     puzzleWords = pick ? pick.map((p) => p.word) : null;
   }
 
