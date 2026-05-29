@@ -560,6 +560,7 @@ function reportSessionEvent(name, params = {}) {
     timestamp: new Date().toISOString(),
     ...params
   };
+  storeLocalReportEvent(payload);
   const body = JSON.stringify(payload);
   if (navigator.sendBeacon) {
     const blob = new Blob([body], { type: 'application/json' });
@@ -572,6 +573,42 @@ function reportSessionEvent(name, params = {}) {
     body,
     keepalive: true
   }).catch(() => {});
+}
+
+function storeLocalReportEvent(payload) {
+  const storageKey = 'ls-report-sessions';
+  let sessions = [];
+  try {
+    sessions = JSON.parse(localStorage.getItem(storageKey)) || [];
+  } catch (err) {
+    sessions = [];
+  }
+
+  let row = sessions.find((session) => session.session_id === payload.session_id);
+  if (!row) {
+    row = {
+      session_id: payload.session_id,
+      game_id: payload.game_id || '',
+      session_start: payload.session_start || '',
+      submit_attempts: 0,
+      time_to_solve_seconds: null,
+      solution_set: payload.solution_set || '',
+      solved: false
+    };
+    sessions.push(row);
+  }
+
+  row.game_id = payload.game_id || row.game_id;
+  row.session_start = payload.session_start || row.session_start;
+  row.solution_set = payload.solution_set || row.solution_set;
+  if (payload.event === 'submit_attempt') row.submit_attempts += 1;
+  if (payload.event === 'submit_success') {
+    row.solved = true;
+    row.time_to_solve_seconds = payload.time_to_solve_seconds ?? payload.elapsed_seconds ?? row.time_to_solve_seconds;
+  }
+
+  sessions.sort((a, b) => String(b.session_start).localeCompare(String(a.session_start)));
+  localStorage.setItem(storageKey, JSON.stringify(sessions.slice(0, 500)));
 }
 
 function markPuzzleStarted(inputMethod) {

@@ -4,6 +4,7 @@ const tbody = document.getElementById('sessions');
 const summaryEl = document.getElementById('summary');
 const statusEl = document.getElementById('status');
 const refreshBtn = document.getElementById('refresh');
+const LOCAL_REPORT_KEY = 'ls-report-sessions';
 
 function formatDate(value) {
   if (!value) return '';
@@ -77,9 +78,21 @@ async function loadReports() {
     renderRows(sessions);
     summaryEl.textContent = `${sessions.length} sessions recorded`;
   } catch (err) {
-    statusEl.textContent = `Unable to load reports: ${err.message}`;
+    const sessions = loadLocalReports();
+    renderRows(sessions);
+    summaryEl.textContent = `${sessions.length} local sessions recorded`;
+    statusEl.textContent = `Server reports unavailable; showing sessions stored in this browser.`;
   } finally {
     refreshBtn.disabled = false;
+  }
+}
+
+function loadLocalReports() {
+  try {
+    const sessions = JSON.parse(localStorage.getItem(LOCAL_REPORT_KEY)) || [];
+    return Array.isArray(sessions) ? sessions : [];
+  } catch (err) {
+    return [];
   }
 }
 
