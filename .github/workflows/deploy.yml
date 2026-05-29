@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.FREEHOSTIA_FTP_PASSWORD }}
           protocol: ftp
           port: 21
-          server-dir: ${{ secrets.FREEHOSTIA_FTP_REMOTE_PATH }}
+          server-dir: /letterset/
           local-dir: ./
           exclude: |
             .git/**
