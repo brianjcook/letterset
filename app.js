@@ -14,6 +14,12 @@ const state = {
   activeCol: 0,
   solved: false,
   dayKey: '',
+  puzzleMode: 'daily',
+  letterSet: '',
+  solutionCount: 0,
+  attemptCount: 0,
+  loadTime: Date.now(),
+  userStartTime: null,
   startTime: null,
   timerId: null
 };
@@ -184,6 +190,17 @@ function countSolutionsForMask(fullMask, maskToCount, minSolutions) {
   return total;
 }
 
+function getFullMask(words) {
+  let fullMask = 0;
+  for (const word of words) {
+    const mask = computeMask(word);
+    if (mask === null) return null;
+    if (fullMask & mask) return null;
+    fullMask |= mask;
+  }
+  return fullMask;
+}
+
 function buildCandidates(allWords) {
   const candidates = [];
   const unusualCandidates = [];
@@ -267,7 +284,7 @@ function renderBank() {
     btn.textContent = tile.ch.toUpperCase();
     btn.setAttribute('data-id', tile.id);
     btn.draggable = !tile.used;
-    btn.addEventListener('click', () => placeFromTile(tile.id, null, null, true));
+    btn.addEventListener('click', () => placeFromTile(tile.id, null, null, true, 'tile_click'));
     btn.addEventListener('dragstart', (e) => {
       if (tile.used) return e.preventDefault();
       e.dataTransfer.setData('text/plain', tile.id);
@@ -299,7 +316,7 @@ function renderGrid() {
       cell.addEventListener('drop', (e) => {
         e.preventDefault();
         const id = Number(e.dataTransfer.getData('text/plain'));
-        placeFromTile(id, r, c);
+        placeFromTile(id, r, c, false, 'drop');
       });
       row.appendChild(cell);
     }
@@ -351,9 +368,10 @@ function nextOpenSlot(fromRow, fromCol) {
   return null;
 }
 
-function placeFromTile(id, row = null, col = null, useActiveCol = false) {
+function placeFromTile(id, row = null, col = null, useActiveCol = false, inputMethod = 'tile') {
   const tile = state.tiles.find((t) => t.id === id);
   if (!tile || state.solved) return;
+  markPuzzleStarted(inputMethod);
   if (row === null) row = state.activeRow;
   if (col === null) col = useActiveCol ? state.activeCol : nextEmptyCell(row);
   if (col < 0) return;
@@ -414,6 +432,12 @@ function clearRow(row) {
 }
 
 function resetAll() {
+  const resetParams = {
+    ...getPuzzleContextParams(),
+    filled_count: getFilledCount(),
+    elapsed_seconds: getElapsedSeconds(),
+    active_elapsed_seconds: getActiveElapsedSeconds()
+  };
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       state.grid[r][c] = '';
@@ -421,10 +445,12 @@ function resetAll() {
   }
   state.tiles.forEach((t) => (t.used = false));
   state.solved = false;
+  state.userStartTime = null;
+  state.attemptCount = 0;
   setMessage('');
   showNextPuzzle(false);
   closeModal();
-  trackEvent('reset_all');
+  trackEvent('reset_all', resetParams);
   persistState(true);
   renderBank();
   renderGrid();
@@ -444,7 +470,7 @@ function openModal() {
   if (!modalEl) return;
   modalEl.classList.add('open');
   modalEl.setAttribute('aria-hidden', 'false');
-  trackEvent('modal_open');
+  trackEvent('modal_open', getPuzzleContextParams());
 }
 
 function closeModal() {
@@ -470,6 +496,40 @@ function validate() {
   return { ok: true };
 }
 
+function getSubmittedWords() {
+  return state.grid.map((row) => row.join(''));
+}
+
+function getFilledCount() {
+  return state.grid.flat().filter(Boolean).length;
+}
+
+function getActiveElapsedSeconds() {
+  if (!state.userStartTime) return 0;
+  return Math.floor((Date.now() - state.userStartTime) / 1000);
+}
+
+function getPuzzleContextParams() {
+  return {
+    day_key: state.dayKey,
+    puzzle_mode: state.puzzleMode,
+    letter_set: state.letterSet,
+    solution_count: state.solutionCount,
+    attempt_count: state.attemptCount
+  };
+}
+
+function markPuzzleStarted(inputMethod) {
+  if (state.userStartTime) return;
+  state.userStartTime = Date.now();
+  persistState();
+  trackEvent('puzzle_start', {
+    ...getPuzzleContextParams(),
+    input_method: inputMethod,
+    seconds_after_load: Math.floor((state.userStartTime - state.loadTime) / 1000)
+  });
+}
+
 function persistState(clear = false) {
   const key = `ls-state-${state.dayKey}`;
   if (clear) {
@@ -480,7 +540,9 @@ function persistState(clear = false) {
     grid: state.grid,
     tiles: state.tiles,
     solved: state.solved,
-    startTime: state.startTime
+    startTime: state.startTime,
+    userStartTime: state.userStartTime,
+    attemptCount: state.attemptCount
   };
   localStorage.setItem(key, JSON.stringify(payload));
 }
@@ -488,7 +550,7 @@ function persistState(clear = false) {
 function restoreState() {
   const key = `ls-state-${state.dayKey}`;
   const data = localStorage.getItem(key);
-  if (!data) return;
+  if (!data) return false;
   try {
     const parsed = JSON.parse(data);
     if (parsed.grid && parsed.tiles) {
@@ -496,10 +558,14 @@ function restoreState() {
       state.tiles = parsed.tiles;
       state.solved = parsed.solved || false;
       state.startTime = parsed.startTime || state.startTime;
+      state.userStartTime = parsed.userStartTime || state.userStartTime;
+      state.attemptCount = parsed.attemptCount || 0;
+      return true;
     }
   } catch (err) {
     console.warn('Failed to restore state', err);
   }
+  return false;
 }
 
 function initGridEvents() {
@@ -558,13 +624,22 @@ function initGridEvents() {
       state.tiles.find((t) => t.ch === key && !t.used) ||
       state.tiles.find((t) => t.ch === key);
     if (!tile) return;
-    placeFromTile(tile.id, null, null, true);
+    placeFromTile(tile.id, null, null, true, 'keyboard');
   });
 }
 
 function setupButtons() {
   submitBtn.addEventListener('click', () => {
+    state.attemptCount += 1;
     const result = validate();
+    const submittedWords = getSubmittedWords();
+    const submitParams = {
+      ...getPuzzleContextParams(),
+      attempt_count: state.attemptCount,
+      filled_count: getFilledCount(),
+      guess_set: submittedWords.join('|')
+    };
+    trackEvent('submit_attempt', submitParams);
     if (result.ok) {
       state.solved = true;
       setMessage('Success! You found a solution.', 'success');
@@ -574,11 +649,19 @@ function setupButtons() {
       if (modalTimeEl) {
         modalTimeEl.textContent = `You found a solution in ${formatElapsedLong(elapsedSeconds)}.`;
       }
-      trackEvent('submit_success', { elapsed_seconds: elapsedSeconds });
+      trackEvent('submit_success', {
+        ...submitParams,
+        elapsed_seconds: elapsedSeconds,
+        active_elapsed_seconds: getActiveElapsedSeconds()
+      });
       openModal();
       persistState();
     } else {
-      trackEvent('submit_failure', { reason: result.reason });
+      trackEvent('submit_failure', {
+        ...submitParams,
+        reason: result.reason
+      });
+      persistState();
       setMessage(result.reason, 'error');
     }
     if (!state.solved) focusFirstSlot();
@@ -654,8 +737,10 @@ async function init() {
     if (validatePuzzleWords(normalized, candidatesBundle)) {
       pickWords = normalized;
       state.dayKey = `test-${testId}`;
+      state.puzzleMode = 'test';
     }
   } else {
+    state.puzzleMode = 'daily';
     try {
       const puzzlesRes = await fetch(PUZZLES_PATH);
       if (puzzlesRes.ok) {
@@ -681,8 +766,13 @@ async function init() {
     pickWords = pick.map((p) => p.word);
   }
 
+  const fullMask = getFullMask(pickWords);
+  state.letterSet = pickWords.join('').split('').sort().join('');
+  state.solutionCount =
+    fullMask === null ? 0 : countSolutionsForMask(fullMask, candidatesBundle.maskToCount, Number.POSITIVE_INFINITY);
+
   buildTiles(pickWords, seed);
-  restoreState();
+  const restoredState = restoreState();
 
   renderBank();
   renderGrid();
@@ -701,7 +791,11 @@ async function init() {
     }
   }
 
-  trackEvent('puzzle_start', { day_key: state.dayKey });
+  trackEvent('game_loaded', {
+    ...getPuzzleContextParams(),
+    restored_state: restoredState ? 1 : 0,
+    solved: state.solved ? 1 : 0
+  });
 
   focusFirstSlot();
 }
