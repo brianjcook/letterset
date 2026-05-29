@@ -4,6 +4,7 @@ const ROWS = 3;
 const COLS = 5;
 const UNUSUAL = new Set(['q', 'x', 'y', 'z']);
 const MIN_SOLUTIONS = 3;
+const SESSION_REPORT_PATH = 'api/session.php';
 
 const state = {
   words: [],
@@ -20,6 +21,9 @@ const state = {
   attemptCount: 0,
   loadTime: Date.now(),
   userStartTime: null,
+  sessionId: '',
+  sessionStart: '',
+  solutionSet: '',
   startTime: null,
   timerId: null
 };
@@ -451,6 +455,7 @@ function resetAll() {
   showNextPuzzle(false);
   closeModal();
   trackEvent('reset_all', resetParams);
+  reportSessionEvent('reset_all', resetParams);
   persistState(true);
   renderBank();
   renderGrid();
@@ -514,20 +519,72 @@ function getPuzzleContextParams() {
     day_key: state.dayKey,
     puzzle_mode: state.puzzleMode,
     letter_set: state.letterSet,
+    solution_set: state.solutionSet,
     solution_count: state.solutionCount,
     attempt_count: state.attemptCount
   };
+}
+
+function createSessionId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `ls-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function setupReportSession() {
+  const storageKey = `ls-report-session-${state.dayKey}`;
+  let saved = null;
+  try {
+    saved = JSON.parse(sessionStorage.getItem(storageKey));
+  } catch (err) {
+    saved = null;
+  }
+
+  state.sessionId = saved?.sessionId || createSessionId();
+  state.sessionStart = saved?.sessionStart || new Date().toISOString();
+  sessionStorage.setItem(
+    storageKey,
+    JSON.stringify({ sessionId: state.sessionId, sessionStart: state.sessionStart })
+  );
+}
+
+function reportSessionEvent(name, params = {}) {
+  if (!state.sessionId) return;
+  const payload = {
+    event: name,
+    session_id: state.sessionId,
+    game_id: state.dayKey,
+    session_start: state.sessionStart,
+    solution_set: state.solutionSet,
+    submit_attempts: state.attemptCount,
+    time_to_solve_seconds: state.solved ? getElapsedSeconds() : null,
+    timestamp: new Date().toISOString(),
+    ...params
+  };
+  const body = JSON.stringify(payload);
+  if (navigator.sendBeacon) {
+    const blob = new Blob([body], { type: 'application/json' });
+    navigator.sendBeacon(SESSION_REPORT_PATH, blob);
+    return;
+  }
+  fetch(SESSION_REPORT_PATH, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    keepalive: true
+  }).catch(() => {});
 }
 
 function markPuzzleStarted(inputMethod) {
   if (state.userStartTime) return;
   state.userStartTime = Date.now();
   persistState();
-  trackEvent('puzzle_start', {
+  const params = {
     ...getPuzzleContextParams(),
     input_method: inputMethod,
     seconds_after_load: Math.floor((state.userStartTime - state.loadTime) / 1000)
-  });
+  };
+  trackEvent('puzzle_start', params);
+  reportSessionEvent('puzzle_start', params);
 }
 
 function persistState(clear = false) {
@@ -640,6 +697,7 @@ function setupButtons() {
       guess_set: submittedWords.join('|')
     };
     trackEvent('submit_attempt', submitParams);
+    reportSessionEvent('submit_attempt', submitParams);
     if (result.ok) {
       state.solved = true;
       setMessage('Success! You found a solution.', 'success');
@@ -649,18 +707,25 @@ function setupButtons() {
       if (modalTimeEl) {
         modalTimeEl.textContent = `You found a solution in ${formatElapsedLong(elapsedSeconds)}.`;
       }
-      trackEvent('submit_success', {
+      const successParams = {
         ...submitParams,
         elapsed_seconds: elapsedSeconds,
         active_elapsed_seconds: getActiveElapsedSeconds()
+      };
+      trackEvent('submit_success', successParams);
+      reportSessionEvent('submit_success', {
+        ...successParams,
+        time_to_solve_seconds: elapsedSeconds
       });
       openModal();
       persistState();
     } else {
-      trackEvent('submit_failure', {
+      const failureParams = {
         ...submitParams,
         reason: result.reason
-      });
+      };
+      trackEvent('submit_failure', failureParams);
+      reportSessionEvent('submit_failure', failureParams);
       persistState();
       setMessage(result.reason, 'error');
     }
@@ -768,8 +833,10 @@ async function init() {
 
   const fullMask = getFullMask(pickWords);
   state.letterSet = pickWords.join('').split('').sort().join('');
+  state.solutionSet = pickWords.map((word) => word.toUpperCase()).join(' / ');
   state.solutionCount =
     fullMask === null ? 0 : countSolutionsForMask(fullMask, candidatesBundle.maskToCount, Number.POSITIVE_INFINITY);
+  setupReportSession();
 
   buildTiles(pickWords, seed);
   const restoredState = restoreState();
@@ -791,11 +858,13 @@ async function init() {
     }
   }
 
-  trackEvent('game_loaded', {
+  const loadedParams = {
     ...getPuzzleContextParams(),
     restored_state: restoredState ? 1 : 0,
     solved: state.solved ? 1 : 0
-  });
+  };
+  trackEvent('game_loaded', loadedParams);
+  reportSessionEvent('game_loaded', loadedParams);
 
   focusFirstSlot();
 }

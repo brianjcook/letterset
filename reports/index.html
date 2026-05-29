@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Letterset Reports</title>
+  <link rel="stylesheet" href="reports.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>Letterset Reports</h1>
+        <p id="summary">Loading sessions...</p>
+      </div>
+      <button id="refresh" type="button">Refresh</button>
+    </header>
+
+    <section class="table-wrap" aria-label="Letterset session report">
+      <table>
+        <thead>
+          <tr>
+            <th>Session ID</th>
+            <th>Game ID</th>
+            <th>Session Start</th>
+            <th>Submit Attempts</th>
+            <th>Time To Solve</th>
+            <th>Solution Letter Set</th>
+          </tr>
+        </thead>
+        <tbody id="sessions"></tbody>
+      </table>
+    </section>
+
+    <p id="status" class="status" role="status"></p>
+  </main>
+
+  <script src="reports.js"></script>
+</body>
+</html>
