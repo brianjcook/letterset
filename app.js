@@ -4,7 +4,7 @@ const ROWS = 3;
 const COLS = 5;
 const UNUSUAL = new Set(['q', 'x', 'y', 'z']);
 const MIN_SOLUTIONS = 3;
-const SESSION_REPORT_PATH = 'api/session.php';
+const SESSION_REPORT_PATH = 'session.php';
 
 const state = {
   words: [],

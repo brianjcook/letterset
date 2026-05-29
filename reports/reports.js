@@ -1,4 +1,4 @@
-const REPORT_ENDPOINT = '../api/session.php';
+const REPORT_ENDPOINT = '../session.php';
 
 const tbody = document.getElementById('sessions');
 const summaryEl = document.getElementById('summary');
