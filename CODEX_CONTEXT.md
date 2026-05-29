@@ -17,7 +17,7 @@ Letterset is a daily five-letter word puzzle at `/games/letterset/`. Players use
 - Added `reports/` static dashboard that reads aggregated sessions from `session.php` and falls back to local browser data.
 - Added root-level `session.php` as the reporting endpoint. It stores newline-delimited JSON events in `_report_data/session-events.jsonl` and aggregates them for the dashboard.
 - Added `_report_data/.htaccess` to deny direct public access to stored report data.
-- Added a temporary `php-test.php` endpoint to verify whether PHP executes under the Letterset deployment path.
+- Temporarily deployed `php-test.php` to verify PHP execution and report-data writability, then removed it after confirmation.
 - Added `.gitignore` entries for local source wordlist scratch files and generated report data.
 - Updated the deploy workflow to exclude `CODEX_CONTEXT.md` from FTP deployment.
 
@@ -30,7 +30,6 @@ Letterset is a daily five-letter word puzzle at `/games/letterset/`. Players use
 - `reports/index.html`: reports dashboard shell.
 - `reports/reports.js`: reports dashboard data loading/rendering.
 - `session.php`: server-side reporting endpoint.
-- `php-test.php`: temporary PHP execution diagnostic endpoint.
 - `_report_data/.htaccess`: denies direct browser access to report storage.
 - `.github/workflows/deploy.yml`: FTP deployment workflow.
 
@@ -38,24 +37,27 @@ Letterset is a daily five-letter word puzzle at `/games/letterset/`. Players use
 - GitHub Actions deploys from `master` to Freehostia FTP `server-dir: /letterset/`.
 - Local validation passed for the reporting endpoint:
   - `php -l session.php`
-  - `php -l php-test.php`
   - `node --check app.js`
   - `node --check reports/reports.js`
-  - Local PHP built-in-server GET/POST smoke test against `php-test.php` and `session.php`.
-- Live PHP execution under `/games/letterset/` is still being verified. Earlier live requests to PHP returned 403 or Drupal-style 400 responses before `session.php` was made self-contained.
+  - Local PHP built-in-server GET/POST smoke test against `session.php`.
+- Live PHP execution under `/games/letterset/` is confirmed.
+- `https://thecookblog.com/games/letterset/php-test.php` returned 200 while deployed and confirmed `_report_data` was writable.
+- `https://thecookblog.com/games/letterset/session.php` returned 200 JSON with `{"ok":true,"sessions":[]}` before any live sessions were recorded.
+- `https://thecookblog.com/games/letterset/reports/` returned 200 HTML.
+- `php-test.php` has been removed from the repo and should be deleted from the live server by the next FTP sync.
 
 ## Recent commits
 - `894156a` Bust cached Letterset scripts
+- `0478ebd` Add root Letterset report endpoint diagnostic
+- `8ef2986` Check Letterset report data writability
 - `5b450d0` Deploy Letterset to live FTP path
 - `f469b68` Add local reports fallback
 - `8a5062e` Allow Letterset PHP endpoint
-- `bb4ee30` Move report endpoint to root
 
 ## Next priority tasks
-- Deploy and test `https://thecookblog.com/games/letterset/php-test.php`.
-- Deploy and test `https://thecookblog.com/games/letterset/session.php` with GET and POST.
-- If PHP still fails under `/games/letterset/`, ask the user to either adjust permissions or place the endpoint in the actual PHP-executing site root, then update `SESSION_REPORT_PATH` and `REPORT_ENDPOINT`.
-- Remove `php-test.php` after PHP execution is confirmed or after an alternate endpoint path is chosen.
+- Let real gameplay create the first server-side report rows.
+- If `reports/` still shows the local fallback after a real play session, inspect browser network requests to `session.php` and confirm POST status.
+- Consider adding lightweight access protection for `reports/` if the dashboard should not be publicly viewable.
 
 ## Resume prompt for a brand-new Codex session
-Read `CODEX_CONTEXT.md`, inspect `git status`, then continue verifying the Letterset reports endpoint. If `php-test.php` and `session.php` have not been deployed yet, commit and push the current reporting endpoint changes, wait for GitHub Actions to finish, then test the live PHP endpoints under `https://thecookblog.com/games/letterset/`. If live PHP still returns 403 or Drupal-style 400 responses, coordinate with the user on CHMOD or moving the endpoint to the actual root folder and update the JS endpoint URLs accordingly.
+Read `CODEX_CONTEXT.md`, inspect `git status`, and continue Letterset work from the current reports implementation. Live PHP under `/games/letterset/` has been confirmed. The next check is to play or simulate a real session and confirm `session.php` receives POST events and `reports/` shows server-side rows instead of local fallback data.
