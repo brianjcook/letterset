@@ -43,13 +43,15 @@ Letterset is a daily five-letter word puzzle at `/games/letterset/`. Players use
 - Live PHP execution under `/games/letterset/` is confirmed.
 - `https://thecookblog.com/games/letterset/php-test.php` returned 200 while deployed and confirmed `_report_data` was writable.
 - `https://thecookblog.com/games/letterset/session.php` returned 200 JSON with `{"ok":true,"sessions":[]}` before any live sessions were recorded.
+- A live invalid POST to `session.php` returned the expected 400 JSON validation response, confirming POST requests reach the endpoint without being intercepted.
 - `https://thecookblog.com/games/letterset/reports/` returned 200 HTML.
-- `php-test.php` has been removed from the repo and should be deleted from the live server by the next FTP sync.
+- `php-test.php` has been removed from the repo and live server; the live URL now returns 404.
 
 ## Recent commits
 - `894156a` Bust cached Letterset scripts
 - `0478ebd` Add root Letterset report endpoint diagnostic
 - `8ef2986` Check Letterset report data writability
+- `681807e` Remove Letterset PHP diagnostic
 - `5b450d0` Deploy Letterset to live FTP path
 - `f469b68` Add local reports fallback
 - `8a5062e` Allow Letterset PHP endpoint
